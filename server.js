@@ -22,7 +22,7 @@ let score = 0;
 const DEFAULT_SCORE = 20;
 const SECRET_KEY = "Secret";
 
-
+app.use(express.static(path.join(__dirname, 'front/build')));
 
 // TODO: dont trust client header
 app.post("/requestScore", (req, res)=>{
