@@ -88,7 +88,7 @@ class App extends React.Component {
     console.log("Get score");
     let token = window.localStorage.token;
     console.log(token);
-    let url = "http://localhost:3001/requestScore";
+    let url = "/requestScore";
 
     fetch(url, {
       method: 'POST', mode: "cors", credentials: "same-origin",
@@ -114,7 +114,7 @@ class App extends React.Component {
     console.log("Score spend stuff");
     let token = window.localStorage.token;
     console.log(token);
-    let url = "http://localhost:3001/spendScore";
+    let url = "/spendScore";
 
     //this.setState({buttonDisabled: true});
 
