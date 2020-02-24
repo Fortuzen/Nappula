@@ -1,10 +1,11 @@
 import React from 'react';
+import useState from "react";
 import { CSSTransitionGroup } from 'react-transition-group' // ES6
+import {motion} from "framer-motion"
 
-
-import logo from './logo.svg';
 import './App.css';
 
+const TestAnim = () => <motion.div initial={{opacity: 0}} animate={{rotate: 360}} transition={{ duration: 0.5 }}/>;
 
 class Button extends React.Component {
   constructor(props) {
@@ -14,26 +15,53 @@ class Button extends React.Component {
 
   render() {
     return(
-      <div>
+      <>
       {/*<button onClick={() => this.onClick()}>{this.props.text}</button>*/}
-
-      <div id="button-container" onClick={() => this.onClick()}>       
-        <div id="button-top" className={this.props.topColor}></div>
-        <div id="button-bottom"></div>
-      </div>
-
-      </div>
+      
+        <div id="button-container" onClick={() => this.onClick()}>     
+          <motion.div whileTap={{ y: 30 }} id="button-top" className={this.props.topColor} />      
+          <div id="button-bottom"></div>
+          
+        </div>
+      
+      </>
     )
   }
+}
 
+const GameStatus = (props) => {
+  const score = props.score;
+  const status = props.status;
+  const winAmount = props.winAmount;
+  const clicks = props.clicksToNext;
 
+  return(
+    <div>
+      {score > 0 && 
+        <>
+          Saldosi on {score} <br/>
+          Tuliko voittoa? {status} <br/>
+          Voitit {winAmount} <br/>
+          Seuraavaan {clicks} <br/>     
+        </>
+      }
+      {score <= 0 &&
+        <>
+          Voi Voi! Pisteet loppu! Saat uuden mahdollisuuden painamalla nappia! <br/>
+          Pelin pistetilanne {winAmount} <br/>
+        </>
+      }        
+    </div>
+  )
 }
 
 
 class App extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {score: 0, status: "", winAmount: 0, buttonDisabled: true};
+    this.state = {score: 0,  winAmount: 0, clicksToNext: 0,
+                    status: "",
+                    canPressButton: false};
 
     this.buttonColor = "red";
     this.handleButtonPress = this.handleButtonPress.bind(this);
@@ -41,7 +69,10 @@ class App extends React.Component {
   }
 
   handleButtonPress() {
-    this.state.score <= 0 ? this.resetGame() : this.spendScore();
+    if(this.state.canPressButton) {
+      this.setState({canPressButton: false});
+      this.state.score <= 0 ? this.resetGame() : this.spendScore();
+    }
   }
 
   render() {
@@ -50,25 +81,9 @@ class App extends React.Component {
       
     return (
       <div className="App">
-        {/*<button onClick={()=>this.spendScore()} disabled={this.state.buttonDisabled}>Pay</button>*/}
         <h1>Nappula</h1>
-        <Button onClick={this.handleButtonPress} text="Spend points" topColor={buttonColor}/>
-        {this.state.score > 0 &&
-        <div>
-          <p>Sinun saldo {this.state.score}</p>
-          <p>Tuliko voittoa? {this.state.status}</p>
-          <p>Voitit {this.state.winAmount}</p>
-        </div>
-        }
-
-        {this.state.score <= 0 &&
-          <div>
-            <p>Voi Voi! Pisteet loppu!</p>
-          </div>
-        }
-        {this.state.status === "Gameover" &&
-         <p>Pelin pistetilanne {this.state.winAmount}</p> 
-        }
+        <Button onClick={this.handleButtonPress} text="Spend points" topColor={buttonColor}/>   
+        <GameStatus score={this.state.score} status={this.state.status} winAmount={this.state.winAmount} clicksToNext={this.state.clicksToNext} />
       </div>
     );    
   }
@@ -87,7 +102,6 @@ class App extends React.Component {
   getScore() {
     console.log("Get score");
     let token = window.localStorage.token;
-    console.log(token);
     let url = "/requestScore";
 
     fetch(url, {
@@ -100,20 +114,18 @@ class App extends React.Component {
       if(!res.ok) {
         throw Error(res.statusText);
       } else {
-        console.log(res);
         return res.json();
       }   
     }).then(data =>{
       console.log(data);
       window.localStorage.token = data.token;
-      this.setState({score: data.score, buttonDisabled: false});
+      this.setState({score: data.score, canPressButton: true});
     });
   }
 
   spendScore() {
     console.log("Score spend stuff");
     let token = window.localStorage.token;
-    console.log(token);
     let url = "/spendScore";
 
     //this.setState({buttonDisabled: true});
@@ -124,21 +136,20 @@ class App extends React.Component {
         "Authorization": "Bearer "+token,
         "Content-Type" : "application/json"
       },
-    })
-    .then( (res)=>{
+    }).then( (res)=>{
       if(!res.ok) {
         throw Error(res.statusText);
       } else {
-        console.log(res);
         return res.json();
-    }})
-    .then(data =>{  
+      }
+    }).then(data =>{  
       console.log(data);
-      this.setState({score: data.score, status: data.status.state, winAmount: data.status.score, buttonDisabled: false});
-
+      this.setState({score: data.score, status: data.status.state, winAmount: data.status.score, canPressButton: true, clicksToNext: data.clicksToNext});
     });    
   }
 
 }
+
+
 
 export default App;
