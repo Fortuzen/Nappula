@@ -75,7 +75,7 @@ const App = () => {
   const handleClick = () => {
     console.log("Click", count);
     setCount(count + 1);
-    setButtonUsable(false);
+    //setButtonUsable(false);
 
     if (score <= 0) {
       setIsLoading(true);
@@ -112,7 +112,7 @@ const App = () => {
 
   const activateButton = () => {
     console.log("Button active");
-    setButtonUsable(true);
+    //setButtonUsable(true);
   }
 
 
