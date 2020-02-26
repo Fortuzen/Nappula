@@ -13,7 +13,8 @@ class Game {
         Game.users[userId] = {score: Game.DEFAULT_SCORE, token: newToken};
        
         let data = {score: Game.users[userId].score, token: Game.users[userId].token};
-        console.log(userId);
+        console.log(data);
+
         return data;
     }
 
