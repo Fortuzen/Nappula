@@ -8,13 +8,26 @@ import './App.css';
 
 
 const Button = (props) => {
-
+    const gameOver = props.gameOver;
+    const anim = -40;
+    const onclick = props.enabled ? props.onClick : null;
     return(
-      <>    
-        <div id="button-container" onClick={props.onClick}>     
-          <motion.div whileTap={{ y: 30 }} id="button-top" className={props.topColor} onAnimationComplete={props.onAnimationComplete}/>   
-          <div id="button-bottom"></div>
-        </div>   
+      <>
+        {gameOver &&
+          <motion.div id="button-container"
+              animate={{ x: [0, anim, 0, -anim, 0] }}
+              transition={{duration: 0.25, times: [0, 0.25, 0.5, 0.75, 1], loop: 5}}>
+            <motion.div whileTap={{ y: 30 }} id="button-top" className={"green"} onClick={onclick}/>
+            <div id="button-bottom"></div>
+          </motion.div>
+        }
+        {!gameOver &&
+          <motion.div id="button-container">
+            <motion.div whileTap={{ y: 30 }} id="button-top" className={"red"} onClick={onclick}/>
+            <div id="button-bottom"></div>
+          </motion.div>
+        }
+
       </>
     )
 }
@@ -39,14 +52,17 @@ const GameStatus = (props) => {
 }
 
 const LoadingIcon = (props) => {
+  const animate = props.isLoading ? { scale: 1.5, rotate: 360, display: "inline-block"} : { scale: 1, rotate: 0, display: "inline-block"};
+  const flip = props.isLoading ? Infinity : null;
   return(
-    <div>
+      <>
       <motion.div
-      animate={{ scale: 1.5, rotate: 360 }}
-      transition={{ duration: 1.0, flip:Infinity }}
-      style={{height: "5em", width: "5em", background: "white", borderRadius: "10px", position: "relative", margin: "5em 5em 5em 5em"}} 
-    />
-    </div>
+        animate={animate}
+        transition={{ duration: 1.0, flip:flip }}
+        style={{height: "1em", width: "1em", background: "white", borderRadius: "10px"}}
+     /* style={{height: "5em", width: "5em", background: "white", borderRadius: "10px", position: "relative", margin: "5em 5em 5em 5em"}} */    
+      />
+    </>
   )
 }
 
@@ -56,9 +72,10 @@ const App = () => {
   const [winScore, setWinScore] = useState(0);
   const [nextClicks, setNextClicks] = useState(0);
   const [status, setStatus] = useState("");
-  const [buttonUsable, setButtonUsable] = useState(false);
+  const [isButtonEnabled, setIsButtonEnabled] = useState(false);
   const [count, setCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGameOver, setIsGameOver] = useState(false);
 
   useEffect(() => {
     console.log("Effect Test");
@@ -67,8 +84,10 @@ const App = () => {
       .then(data => {
         console.log(data);
         setScore(data.score);
-        setButtonUsable(true);
+        setIsButtonEnabled(true);
         setIsLoading(false);
+        const over = data.score > 0 ? false : true;
+        setIsGameOver(over);
       });
   }, []);
 
@@ -84,13 +103,15 @@ const App = () => {
         .then((data)=>{
           setScore(data.score); setWinScore(0); setNextClicks(0); setStatus("");
           setIsLoading(false);
+          setIsGameOver(false);
         });
       return;
     }
     
-    if(!buttonUsable) {
+    if(!isButtonEnabled) {
       return;
     }
+
     fetchers
       .fetchSpend()
       .then(data => {
@@ -99,6 +120,13 @@ const App = () => {
         setStatus(data.status.state);
         setWinScore(data.status.score);
         setNextClicks(data.clicksToNext);
+        const over = data.score > 0 ? false : true;
+        if(over) {
+          setIsGameOver(true);
+          setIsButtonEnabled(false);
+          setTimeout(()=>{setIsButtonEnabled(true);}, 1000);
+        }
+        
       });
   }
 
@@ -118,14 +146,10 @@ const App = () => {
 
   return (
     <div className="App">
-      <h1>Nappula</h1>
-      {isLoading &&
-        <LoadingIcon/>
-      }
-
+      <h1>Nappula <LoadingIcon isLoading={isLoading}/></h1>
       {!isLoading &&
         <>
-        <Button onClick={handleClick} topColor={buttonColor()} onAnimationComplete={activateButton}/>
+        <Button onClick={handleClick} topColor={buttonColor()} gameOver={isGameOver} enabled={isButtonEnabled} />
         <GameStatus>
           {score > 0 &&
             <>
