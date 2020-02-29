@@ -1,7 +1,7 @@
 # Nappula
 Napinpainallus moninpeli.
 
-[Peli löytyy täältä](nappula.herokuapp.com) Herokusta.
+[Peli löytyy täältä](http://nappula.herokuapp.com) Herokusta.
 
 Nappia painamalla ja yhden pisteen kuluttamalla voit voittaa pisteitä.
 
