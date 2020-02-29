@@ -20,7 +20,7 @@ Aja sitten seuraavat komennot juurikansiosta alkaen (siellä missä on server.js
 
 `npm install` (Asenna frontendin riippuvuudet)
 
-Sitten luo ".env"-tiedosto, jonne laitetaan salainen avain muodossa ilman lainausmerkkejä "SECRET=avain".
+Sitten luo juurikansioon ".env"-tiedosto, jonne laitetaan salainen {avain} muodossa ilman lainausmerkkejä "SECRET={avain}".
 
 Näiden jälkeen voit laittaa pelin pystyyn komennoilla. Käytä kahta terminaalia/komentoriviä. Varmista, että olet juurikansiossa.
 
