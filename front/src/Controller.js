@@ -1,7 +1,8 @@
-const fetchScore = () => {
+// Request points or new id from the server
+const fetchRequest = () => {
     console.log("fetch Score");
-    let token = getToken();
-    let url = "/requestScore";
+    const token = getToken();
+    const url = "/requestPoints";
 
     const request = fetch(url, {
             method: 'POST', mode: "cors", credentials: "same-origin",
@@ -14,16 +15,17 @@ const fetchScore = () => {
     return request.then((data)=>{
         //console.log(data);
         setToken(data.token);
-        console.log(getToken());
+        //console.log(getToken());
         return data;
     });
 }
 
+// Send a point spending request to the server
 const fetchSpend = () => {
     console.log("fetchSpend");
-    let token = getToken();
-    console.log(token);
-    let url = "/spendScore";
+    const token = getToken();
+    //console.log(token);
+    const url = "/spendPoints";
     const request = fetch(url, {
             method: 'POST', mode: "cors", credentials: "same-origin",
             headers: {
@@ -34,14 +36,21 @@ const fetchSpend = () => {
         });
     return request.then((data)=>{
         //console.log(data);
+        // If there is a token, then it means the user was issued a new id.
+        if(data.token) {
+            setToken(data.token);
+            data.pointsWon = 0;
+            data.pointsToNextWin = 0;
+        }
         return data;
     });  
 }
 
+// Reset request for game over
 const fetchReset = () => {
     console.log("Fetch reset");
     setToken("");
-    return fetchScore();
+    return fetchRequest();
 }
 
 function setToken(token) {
@@ -53,4 +62,4 @@ function getToken() {
 }
 
 
-export default { fetchScore, fetchSpend, fetchReset }
+export default { fetchRequest, fetchSpend, fetchReset }

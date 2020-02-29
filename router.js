@@ -3,14 +3,25 @@ const jwt = require("jsonwebtoken");
 const uniqid = require("uniqid");
 
 const game = require("./Game.js");
-
 const router = express.Router()
+
+/*
+    Handle game related requests
+*/
 
 router.use(handleAuth)
 
+function getTokenFromHeader(headers) {
+    if(headers.authorization && headers.authorization.split(" ")[0] === "Bearer") {
+        return headers.authorization.split(" ")[1];
+    }
+    return null;
+}
+
+// Verify user's token or create a new user
 function handleAuth(req, res, next) {
-    const token = req.headers.authorization.split(" ")[1];
-    console.log("MAuth:" + token);
+    const token = getTokenFromHeader(req.headers);
+    //console.log("R_Auth:" + token);
     if(!token) {
         // No token, create one
         console.log("No token. Create new id.");
@@ -20,14 +31,15 @@ function handleAuth(req, res, next) {
         console.log("Token detected");
         try {
             let verifiedMessage = jwt.verify(token, process.env.SECRET);
-            console.log(verifiedMessage);
+            //console.log(verifiedMessage);
             const userId = verifiedMessage._id;
             const user = game.users[userId];
             if(user) {
                 res.locals.user = user;
                 next();
             } else {
-                console.log("No user. Create new id.");    
+                console.log("Not current user. Create new id.");
+                delete game.users[userId];
                 data = game.createUser();
                 res.send(data);
             }
@@ -40,44 +52,33 @@ function handleAuth(req, res, next) {
     }
 }
 
-// TODO: dont trust client header
-// Send user their current score or create a new identity if
-// it does not exist
-router.post("/requestScore", (req, res) => {
-    //console.log(req.headers);
-    //console.log(req.body);
+// Send user their current points
+router.post("/requestPoints", (req, res) => {
     const user = res.locals.user;
-    console.log(user);
+    //console.log(user);
     const token = res.locals.user.token;
-    console.log("rS:" + token);
-    res.send({score: user.score, token: token});
+    res.send({points: user.points, token: token});
  
 });
 
-// Allow user to spend and win points.
-// Send user the following: score, status, points won, clicks to next win.
-router.post("/spendScore", (req, res) => {
+// Spend user's points.
+// Send user the following: points, points won, points to next win
+router.post("/spendPoints", (req, res) => {
     const user = res.locals.user;
 
-    let status = "";
     let winAmount = 0;
-    let clicksToNext = 0;
+    let pointsToNext = 0;
 
-    if (user.score > 0) {
-        user.score -= 1;
-        game.score += 1;
-        winAmount = game.determineWin(game.score);
-        user.score += winAmount;
-        status = winAmount > 0 ? "Win" : "Lose";
-        clicksToNext = game.countClicksToNextWin(game.score);
-
-        if(user.score <= 0) {
-            status = "Gameover";
-            winAmount = game.score;
-        }
-    }     
-    console.log("Total score " + game.score);                      
-    res.send({score: user.score, status: {state: status, score: winAmount}, clicksToNext: clicksToNext});
+    if (user.points > 0) {
+        user.points -= 1;
+        game.points += 1;
+        winAmount = game.calculatePointsWon(game.points);
+        user.points += winAmount;
+        pointsToNext = game.pointsToNextWin(game.points);
+    }  
+   
+    console.log("Total points " + game.points);                      
+    res.send({points: user.points, pointsWon: winAmount, pointsToNextWin: pointsToNext});
 
 
     

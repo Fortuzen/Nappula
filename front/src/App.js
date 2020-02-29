@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { CSSTransitionGroup } from 'react-transition-group' // ES6
 import {motion} from "framer-motion"
 
 import fetchers from "./Controller";
@@ -8,23 +7,24 @@ import './App.css';
 
 
 const Button = (props) => {
-    const gameOver = props.gameOver;
-    const anim = -40;
+    const gameOver = props.status.points > 0 ? false : true;
+    const color = !props.enabled ? "green" : "red";
+    const animXPos = -40;
     const onclick = props.enabled ? props.onClick : null;
     return(
       <>
         {gameOver &&
           <motion.div id="button-container"
-              animate={{ x: [0, anim, 0, -anim, 0] }}
-              transition={{duration: 0.25, times: [0, 0.25, 0.5, 0.75, 1], loop: 5}}>
-            <motion.div whileTap={{ y: 30 }} id="button-top" className={"green"} onClick={onclick}/>
+              animate={{ x: [0, animXPos, 0, -animXPos, 0] }}
+              transition={{duration: 0.5, times: [0, 0.25, 0.5, 0.75, 1], loop: 2}}>
+            <motion.div whileTap={{ y: 30 }} id="button-top" className={color} onClick={onclick}/>
             <div id="button-bottom"></div>
           </motion.div>
         }
         {!gameOver &&
           <motion.div id="button-container">
-            <motion.div whileTap={{ y: 30 }} id="button-top" className={"red"} onClick={onclick}/>
-            <div id="button-bottom"></div>
+            <motion.div whileTap={{ y: 30 }} id="button-top" className={color} onClick={onclick}/>
+            <motion.div id="button-bottom" />
           </motion.div>
         }
 
@@ -32,145 +32,129 @@ const Button = (props) => {
     )
 }
 
-const GameStatusText = (props) => {
-  const text = props.text;
-  const value = props.value;
-
+const GameStatus = (props) => {
+  const status = props.status;
+  const gameOver = status.points > 0 ? false : true;
   return(
     <>
-      {text} {value} <br/>
+      {!gameOver &&
+        <>
+          Saldosi: {status.points} <br/>
+          Voittosumma: {status.pointsWon} <br/>           
+          Pisteitä seuraavaan voittoon: {status.pointsToNextWin} <br/>
+        </>
+      }
+      {gameOver &&
+        <>
+          Pisteet loppu! Yritä uudelleen painamalla nappia! <br/>
+        </>
+      }
     </>
-  )
-}
-
-const GameStatus = (props) => {
-  return(
-    <div>
-      {props.children}      
-    </div>
   )
 }
 
 const LoadingIcon = (props) => {
   const animate = props.isLoading ? { scale: 1.5, rotate: 360, display: "inline-block"} : { scale: 1, rotate: 0, display: "inline-block"};
-  const flip = props.isLoading ? Infinity : null;
+  const style = {height: "1em", width: "1em", background: "white", borderRadius: "10px"};
+  const loop = props.isLoading ? Infinity : null;
+  const transition = {duration: 1.0, flip:loop };
   return(
       <>
       <motion.div
         animate={animate}
-        transition={{ duration: 1.0, flip:flip }}
-        style={{height: "1em", width: "1em", background: "white", borderRadius: "10px"}}
-     /* style={{height: "5em", width: "5em", background: "white", borderRadius: "10px", position: "relative", margin: "5em 5em 5em 5em"}} */    
+        transition={{transition}}
+        style={style}
       />
     </>
   )
 }
 
-
 const App = () => {
-  const [score, setScore] = useState(1);
-  const [winScore, setWinScore] = useState(0);
-  const [nextClicks, setNextClicks] = useState(0);
-  const [status, setStatus] = useState("");
-  const [isButtonEnabled, setIsButtonEnabled] = useState(false);
-  const [count, setCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isGameOver, setIsGameOver] = useState(false);
+  const [points, setPoints] = useState(20);
+  const [pointsWon, setPointsWon] = useState(null);
+  const [pointsToNextWin, setPointsToNextWin] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [buttonEnabled, setButtonEnabled] = useState(true);
 
+
+  // Fetch points from the server. Token created automatically if it doesnt exist.
   useEffect(() => {
-    console.log("Effect Test");
+    console.log("Effect");
+    setLoading(true);
     fetchers
-      .fetchScore()
+      .fetchRequest()
       .then(data => {
         console.log(data);
-        setScore(data.score);
-        setIsButtonEnabled(true);
-        setIsLoading(false);
-        const over = data.score > 0 ? false : true;
-        setIsGameOver(over);
+        setPoints(data.points);
+        //setLoading(false);
+        artificialDelay();
       });
   }, []);
 
-  const handleClick = () => {
-    console.log("Click", count);
-    setCount(count + 1);
-    //setButtonUsable(false);
-
-    if (score <= 0) {
-      setIsLoading(true);
-      fetchers
-        .fetchReset()
-        .then((data)=>{
-          setScore(data.score); setWinScore(0); setNextClicks(0); setStatus("");
-          setIsLoading(false);
-          setIsGameOver(false);
-        });
-      return;
-    }
-    
-    if(!isButtonEnabled) {
-      return;
-    }
-
+  // Spend user's points and update state
+  function spendPoint() {
     fetchers
       .fetchSpend()
       .then(data => {
         console.log(data);
-        setScore(data.score);
-        setStatus(data.status.state);
-        setWinScore(data.status.score);
-        setNextClicks(data.clicksToNext);
-        const over = data.score > 0 ? false : true;
-        if(over) {
-          setIsGameOver(true);
-          setIsButtonEnabled(false);
-          setTimeout(()=>{setIsButtonEnabled(true);}, 1000);
+        setPoints(data.points);
+        setPointsWon(data.pointsWon);
+        setPointsToNextWin(data.pointsToNextWin);
+        // If game over, then disable button for a short amount of time
+        if(data.points <= 0) {
+          setButtonEnabled(false);
+          setTimeout( ()=>{setButtonEnabled(true)}, 1000);
         }
-        
+      });
+  }  
+
+  // Reset the game if game over
+  function handleGameOver() {
+    setLoading(true);
+    fetchers
+      .fetchReset()
+      .then((data)=>{
+        setPoints(data.points);
+        setPointsWon(0);
+        setPointsToNextWin(data.pointsToNextWin);
+        setButtonEnabled(false);
+        setTimeout( ()=>{setButtonEnabled(true)}, 1000);
+        artificialDelay();
       });
   }
 
-  const buttonColor = () => {
-    if(score > 0) {
-      return "red";
+  const handleClick = () => {
+    console.log("Click");
+    if (points > 0 && !loading) {
+      spendPoint();
     } else {
-      return "green";
-    }
+      handleGameOver();
+    }   
   }
 
-  const activateButton = () => {
-    console.log("Button active");
-    //setButtonUsable(true);
+  const gameAreaHide = () => {
+    //console.log("Loading",loading);
+    return loading ? "div-hide" : "div-show";
+  };
+
+  // Slow things down so eveything doesnt happen instantly.
+  function artificialDelay() {
+    setTimeout(()=>{
+      setLoading(false);
+    }, 1000);
   }
 
+  const gameStatusData = {points: points, pointsWon: pointsWon, pointsToNextWin: pointsToNextWin};
 
   return (
     <div className="App">
-      <h1>Nappula <LoadingIcon isLoading={isLoading}/></h1>
-      {!isLoading &&
-        <>
-        <Button onClick={handleClick} topColor={buttonColor()} gameOver={isGameOver} enabled={isButtonEnabled} />
-        <GameStatus>
-          {score > 0 &&
-            <>
-            <GameStatusText text={"Saldosi on"} value={score} />
-            <GameStatusText text={"Tuliko voittoa? "} value={status} />
-            <GameStatusText text={"Voitit"} value={winScore} />
-            <GameStatusText text={"Seuraava voitto on päässä"} value={nextClicks} />
-            </>
-          }
-          {score <= 0 &&
-            <>
-            <GameStatusText text={"Voi Voi! Peli loppui! Haluatko yrittää uudelleen? Paina nappia!"} value={""}/>
-            </>
-          }
-        </GameStatus>
-        </>
-      }
+      <h1>Nappula <LoadingIcon isLoading={loading}/></h1>
+        <div id="game-area" className={gameAreaHide()}>
+          <Button onClick={handleClick} status={gameStatusData} enabled={buttonEnabled}/>
+          {!loading && <GameStatus status={gameStatusData}/>}
+        </div>
     </div>
   ) 
 }
-
-
 
 export default App;
