@@ -3,7 +3,7 @@ Napinpainallus moninpeli.
 
 [Peli löytyy täältä](nappula.herokuapp.com) Herokusta.
 
-Nappia painamalla kulutat yhden pisteen ja voit voittaa pisteitä.
+Nappia painamalla ja yhden pisteen kuluttamalla voit voittaa pisteitä.
 
 Jos pisteet loppuvat, peli on ohi. Tosin voit yrittää heti uudelleen.
 
@@ -16,7 +16,7 @@ Aja sitten seuraavat komennot juurikansiosta alkaen (siellä missä on server.js
 
 `cd front` (Vaihda frontend kansioon)
 
-`npm install` (Asenna frontending riippuvuudet)
+`npm install` (Asenna frontendin riippuvuudet)
 
 Näiden jälkeen voit laittaa pelin pystyyn komennoilla. Käytä kahta terminaalia/komentoriviä. Varmista, että olet juurikansiossa.
 
@@ -29,5 +29,7 @@ Toiseen:
 `cd front`
 
 `npm start` (Frontendin käynnistys)
+
+Selaimen pitäisi avautua automaattisesti osoitteeseen [http://localhost:3000](http://localhost:3000)
 
 Jos löytyy oma Heroku, niin voit niiden ohjeita seuraamalla ajaa sielläkin.

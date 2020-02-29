@@ -39,6 +39,7 @@ class Game {
     }
     
     static pointsToNextWin(currentPoints) {
+        // Round to next ten. eg. 11 -> 1.1 -> 2 -> 20.
         const rounded = Math.ceil(currentPoints / 10) * 10;
         const points = rounded - currentPoints;
         // Dont send number zero

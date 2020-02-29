@@ -1,6 +1,5 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
-const uniqid = require("uniqid");
 
 const game = require("./Game.js");
 const router = express.Router()
@@ -9,6 +8,7 @@ const router = express.Router()
     Handle game related requests
 */
 
+// Use token handling middleware
 router.use(handleAuth)
 
 function getTokenFromHeader(headers) {

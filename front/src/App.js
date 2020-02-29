@@ -5,10 +5,10 @@ import fetchers from "./Controller";
 
 import './App.css';
 
-
+// The main button component.
 const Button = (props) => {
     const gameOver = props.status.points > 0 ? false : true;
-    const color = !props.enabled ? "green" : "red";
+    const color = props.status.points > 0 ? "red" : "green";
     const animXPos = -40;
     const onclick = props.enabled ? props.onClick : null;
     return(
@@ -32,6 +32,7 @@ const Button = (props) => {
     )
 }
 
+// Displays game status (points, points won, points to next win, gameover)
 const GameStatus = (props) => {
   const status = props.status;
   const gameOver = status.points > 0 ? false : true;
@@ -53,9 +54,10 @@ const GameStatus = (props) => {
   )
 }
 
+// Spinning loading icon
 const LoadingIcon = (props) => {
-  const animate = props.isLoading ? { scale: 1.5, rotate: 360, display: "inline-block"} : { scale: 1, rotate: 0, display: "inline-block"};
-  const style = {height: "1em", width: "1em", background: "white", borderRadius: "10px"};
+  let animate = props.isLoading ? { scale: 1.5, rotate: 360} : { scale: 1, rotate: 0};
+  const style = {height: "1em", width: "1em", background: "white", borderRadius: "10px", display: "inline-block"};
   const loop = props.isLoading ? Infinity : null;
   const transition = {duration: 1.0, flip:loop };
   return(
@@ -69,6 +71,7 @@ const LoadingIcon = (props) => {
   )
 }
 
+// The main app component
 const App = () => {
   const [points, setPoints] = useState(20);
   const [pointsWon, setPointsWon] = useState(null);
@@ -79,12 +82,12 @@ const App = () => {
 
   // Fetch points from the server. Token created automatically if it doesnt exist.
   useEffect(() => {
-    console.log("Effect");
+    //console.log("Effect");
     setLoading(true);
     fetchers
       .fetchRequest()
       .then(data => {
-        console.log(data);
+        //console.log(data);
         setPoints(data.points);
         //setLoading(false);
         artificialDelay();
@@ -96,7 +99,7 @@ const App = () => {
     fetchers
       .fetchSpend()
       .then(data => {
-        console.log(data);
+        //console.log(data);
         setPoints(data.points);
         setPointsWon(data.pointsWon);
         setPointsToNextWin(data.pointsToNextWin);
@@ -108,7 +111,7 @@ const App = () => {
       });
   }  
 
-  // Reset the game if game over
+  // Reset the game
   function handleGameOver() {
     setLoading(true);
     fetchers
@@ -124,8 +127,11 @@ const App = () => {
   }
 
   const handleClick = () => {
-    console.log("Click");
-    if (points > 0 && !loading) {
+    if(loading) {
+      return;
+    }
+
+    if (points > 0) {
       spendPoint();
     } else {
       handleGameOver();
@@ -133,11 +139,10 @@ const App = () => {
   }
 
   const gameAreaHide = () => {
-    //console.log("Loading",loading);
     return loading ? "div-hide" : "div-show";
   };
 
-  // Slow things down so eveything doesnt happen instantly.
+  // Delay loading so that things don't happen instantly.
   function artificialDelay() {
     setTimeout(()=>{
       setLoading(false);
